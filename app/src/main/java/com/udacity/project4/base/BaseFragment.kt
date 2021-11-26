@@ -15,6 +15,11 @@ abstract class BaseFragment : Fragment() {
      */
     abstract val _viewModel: BaseViewModel
 
+    companion object {
+        const val TAG = "BaseFragment"
+        const val SIGN_IN_RESULT_CODE = 1001
+    }
+
     override fun onStart() {
         super.onStart()
         _viewModel.showErrorMessage.observe(this, Observer {
