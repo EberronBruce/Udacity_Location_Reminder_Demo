@@ -11,6 +11,7 @@ import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
+import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentRemindersBinding
@@ -78,7 +79,11 @@ class ReminderListFragment : BaseFragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
-               launchSignInFlow()
+               //Add Logout
+                AuthUI.getInstance().signOut(requireContext()).addOnSuccessListener {
+                    startActivity(Intent(activity, AuthenticationActivity::class.java))
+                    activity?.finish()
+                }
             }
         }
         return super.onOptionsItemSelected(item)
@@ -91,27 +96,8 @@ class ReminderListFragment : BaseFragment() {
         inflater.inflate(R.menu.main_menu, menu)
     }
 
-    private fun launchSignInFlow() {
-        val providers = arrayListOf(AuthUI.IdpConfig.EmailBuilder().build(), AuthUI.IdpConfig.GoogleBuilder().build())
-        startActivityForResult(
-            AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(providers)
-                .build(),
-                SIGN_IN_RESULT_CODE
-        )
-    }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == SIGN_IN_RESULT_CODE) {
-            val response = IdpResponse.fromResultIntent(data)
-            if (resultCode == Activity.RESULT_OK) {
-                Log.i(TAG, "Successfully signed in user ${FirebaseAuth.getInstance().currentUser?.displayName}!")
-            } else {
-                Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
-            }
-        }
-    }
+
+
 
 }
