@@ -2,6 +2,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
@@ -10,6 +11,7 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ApiException
@@ -28,6 +30,9 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+
+private val TAG = SelectLocationFragment::class.java.simpleName
+private const val REQUEST_LOCATION_PERMISSION = 1
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -78,15 +83,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
+            //map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
         }
         R.id.hybrid_map -> {
+           // map.mapType = GoogleMap.MAP_TYPE_HYBRID
             true
         }
         R.id.satellite_map -> {
+            //map.mapType = GoogleMap.MAP_TYPE_SATELLITE
             true
         }
         R.id.terrain_map -> {
+            //map.mapType = GoogleMap.MAP_TYPE_TERRAIN
             true
         }
         else -> super.onOptionsItemSelected(item)
@@ -96,7 +105,43 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (googleMap == null) return
         map = googleMap
 
+        val latitude = 40.5323218773475
+        val longitude = -112.29796757850184
+        val zoomLevel = 15f
 
+        val homeLatlng =  LatLng(latitude, longitude)
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatlng, zoomLevel))
+
+
+        //enableMyLocation()
+
+    }
+
+    private fun setMapLongClick(map: GoogleMap) {
+        TODO("Need to implement")
+    }
+
+    private fun setPoiClick(map: GoogleMap) {
+        TODO("Need to implement")
+    }
+
+
+    private fun enableMyLocation() {
+        if (isPermissionGranted()) {
+            @SuppressLint("MissingPermission")
+            map.isMyLocationEnabled = true
+
+        } else {
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION
+            )
+        }
+    }
+
+    private fun isPermissionGranted() : Boolean {
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
 
