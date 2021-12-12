@@ -9,6 +9,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import com.udacity.project4.R
+import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_CODE_LOCATION
 import kotlinx.android.synthetic.main.activity_reminders.*
 
 /**
@@ -20,6 +21,11 @@ class RemindersActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminders)
 
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            REQUEST_CODE_LOCATION
+        )
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

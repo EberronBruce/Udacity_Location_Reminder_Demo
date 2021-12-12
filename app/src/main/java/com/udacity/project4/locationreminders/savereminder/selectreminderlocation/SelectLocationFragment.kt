@@ -11,6 +11,7 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -32,7 +33,7 @@ import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 
 private val TAG = SelectLocationFragment::class.java.simpleName
-private const val REQUEST_LOCATION_PERMISSION = 1
+//private const val REQUEST_LOCATION_PERMISSION = 100
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -40,10 +41,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
+    var location: Location? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        Log.d(TAG, "onCreateView")
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_select_location, container, false)
 
@@ -56,7 +59,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-
+        location = Location(activity as AppCompatActivity, object: locationListener {
+            override fun locationResponse(locationResult: LocationResult) {
+                Log.d(TAG, "Location Response: $locationResult")
+                val userLocation = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 17f))
+            }
+        })
 //        TODO: add the map setup implementation
 //        TODO: zoom to the user location after taking his permission
 //        TODO: add style to the map
@@ -81,7 +90,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
             map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
@@ -105,15 +113,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (googleMap == null) return
         map = googleMap
 
-        val latitude = 40.5323218773475
-        val longitude = -112.29796757850184
-        val zoomLevel = 15f
+        enableMyLocation()
 
-        val homeLatlng =  LatLng(latitude, longitude)
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatlng, zoomLevel))
-
-
-        //enableMyLocation()
 
     }
 
@@ -130,12 +131,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionGranted()) {
             @SuppressLint("MissingPermission")
             map.isMyLocationEnabled = true
-
+            map.uiSettings.isMyLocationButtonEnabled = false
+            map.uiSettings.isZoomControlsEnabled = true
         } else {
             ActivityCompat.requestPermissions(
                 requireActivity(),
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                REQUEST_LOCATION_PERMISSION
+                REQUEST_CODE_LOCATION
             )
         }
     }
@@ -144,5 +146,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        location?.onRequestPermissionResult(requestCode,permissions,grantResults)
 
+    }
+
+    override fun onStart() {
+        super.onStart()
+        location?.initializeLocation()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        location?.stopUdateLocation()
+    }
 }
