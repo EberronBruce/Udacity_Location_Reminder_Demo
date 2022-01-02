@@ -8,8 +8,11 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.icu.lang.UCharacter.GraphemeClusterBreak.L
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -31,6 +34,12 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import android.widget.RelativeLayout
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import java.lang.Exception
+import java.util.*
+
 
 private val TAG = SelectLocationFragment::class.java.simpleName
 //private const val REQUEST_LOCATION_PERMISSION = 100
@@ -42,6 +51,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     var location: Location? = null
+    private val zoomControlOffset = 50
+    private lateinit var userLocation: LatLng
+
+    private lateinit var selectedPoi: PointOfInterest
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -59,11 +72,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        userLocation = LatLng(37.422131, -122.084801)
         location = Location(activity as AppCompatActivity, object: locationListener {
             override fun locationResponse(locationResult: LocationResult) {
-                Log.d(TAG, "Location Response: $locationResult")
-                val userLocation = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 17f))
+                //Log.d(TAG, "Location Response: $locationResult")
+                val currentUserLocation = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
+                if (currentUserLocation != userLocation) {
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, 17f))
+                    userLocation = currentUserLocation
+                }
+
             }
         })
 //        TODO: add the map setup implementation
@@ -74,6 +92,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 //        TODO: call this function after the user confirms on the selected location
         onLocationSelected()
+
+        binding.saveButton.visibility = View.INVISIBLE
 
         return binding.root
     }
@@ -109,21 +129,43 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         else -> super.onOptionsItemSelected(item)
     }
 
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     override fun onMapReady(googleMap: GoogleMap?) {
         if (googleMap == null) return
         map = googleMap
+        setPoiClick(map)
+        setMapLongClick(map)
 
         enableMyLocation()
-
-
     }
 
     private fun setMapLongClick(map: GoogleMap) {
-        TODO("Need to implement")
+        map.setOnMapLongClickListener { latLng ->
+
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Latitutde: %1$.5f, Longitude: %2$.5f",
+                latLng.latitude,
+                latLng.longitude
+            )
+
+            Log.d(TAG, "Set Long Click")
+        }
     }
 
     private fun setPoiClick(map: GoogleMap) {
-        TODO("Need to implement")
+
+        map.setOnPoiClickListener { poi ->
+            Log.d(TAG, "Set Poi Click")
+            selectedPoi = poi
+            val poiMarker = map.addMarker(
+                MarkerOptions()
+                    .position(poi.latLng)
+                    .title(poi.name)
+            )
+            poiMarker.showInfoWindow()
+            binding.saveButton.visibility = View.VISIBLE
+        }
     }
 
 
@@ -132,7 +174,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             @SuppressLint("MissingPermission")
             map.isMyLocationEnabled = true
             map.uiSettings.isMyLocationButtonEnabled = false
-            map.uiSettings.isZoomControlsEnabled = true
+
         } else {
             ActivityCompat.requestPermissions(
                 requireActivity(),
@@ -164,4 +206,5 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onStop()
         location?.stopUdateLocation()
     }
+
 }
