@@ -53,6 +53,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     var location: Location? = null
     private val zoomControlOffset = 50
     private lateinit var userLocation: LatLng
+    private lateinit var marker: Marker
 
     private lateinit var selectedPoi: PointOfInterest
 
@@ -73,12 +74,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         userLocation = LatLng(37.422131, -122.084801)
+
         location = Location(activity as AppCompatActivity, object: locationListener {
             override fun locationResponse(locationResult: LocationResult) {
                 //Log.d(TAG, "Location Response: $locationResult")
                 val currentUserLocation = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
                 if (currentUserLocation != userLocation) {
-                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, 17f))
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, 18f))
                     userLocation = currentUserLocation
                 }
 
@@ -91,7 +93,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 
 //        TODO: call this function after the user confirms on the selected location
-        onLocationSelected()
+        binding.saveButton.setOnClickListener {
+            onLocationSelected()
+        }
+
 
         binding.saveButton.visibility = View.INVISIBLE
 
@@ -133,30 +138,44 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         if (googleMap == null) return
         map = googleMap
-        setPoiClick(map)
         setMapLongClick(map)
+        setPoiClick(map)
 
         enableMyLocation()
     }
 
     private fun setMapLongClick(map: GoogleMap) {
+
         map.setOnMapLongClickListener { latLng ->
+            map.clear()
 
             val snippet = String.format(
                 Locale.getDefault(),
-                "Latitutde: %1$.5f, Longitude: %2$.5f",
+                "Latitude: %1$.5f, Longitude: %2$.5f",
                 latLng.latitude,
                 latLng.longitude
             )
 
             Log.d(TAG, "Set Long Click")
+
+            selectedPoi = PointOfInterest(latLng, snippet, snippet)
+
+            marker = map.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title("Reminder Location")
+                    .snippet(snippet)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+            )
+            binding.saveButton.visibility = View.VISIBLE
         }
     }
 
     private fun setPoiClick(map: GoogleMap) {
 
         map.setOnPoiClickListener { poi ->
-            Log.d(TAG, "Set Poi Click")
+            Log.d(TAG, "${poi.name} ${poi.placeId}")
+            map.clear()
             selectedPoi = poi
             val poiMarker = map.addMarker(
                 MarkerOptions()
