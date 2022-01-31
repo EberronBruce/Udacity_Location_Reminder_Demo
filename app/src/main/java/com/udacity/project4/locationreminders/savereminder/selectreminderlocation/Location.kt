@@ -85,7 +85,7 @@ class Location(var activity: AppCompatActivity, locationListener: locationListen
         }
     }
 
-    fun stopUdateLocation() {
+    fun stopUpdateLocation() {
         this.fusedLocationClient?.removeLocationUpdates(callback)
     }
 

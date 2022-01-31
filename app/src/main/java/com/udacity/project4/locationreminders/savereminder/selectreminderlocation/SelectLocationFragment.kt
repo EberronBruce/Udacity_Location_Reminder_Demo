@@ -3,41 +3,28 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Intent
-import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.content.res.Resources
-import android.icu.lang.UCharacter.GraphemeClusterBreak.L
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.util.TypedValue
 import android.view.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.*
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
-import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
-import android.widget.RelativeLayout
-import android.widget.Toast
-import androidx.annotation.RequiresApi
-import java.lang.Exception
 import java.util.*
 
 
@@ -51,7 +38,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     var location: Location? = null
-    private val zoomControlOffset = 50
+    private var mapZoom = 18f
     private lateinit var userLocation: LatLng
     private lateinit var marker: Marker
 
@@ -78,9 +65,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         location = Location(activity as AppCompatActivity, object: locationListener {
             override fun locationResponse(locationResult: LocationResult) {
                 //Log.d(TAG, "Location Response: $locationResult")
+
                 val currentUserLocation = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
-                if (currentUserLocation != userLocation) {
-                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, 18f))
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(userLocation.latitude, userLocation.longitude, currentUserLocation.latitude, currentUserLocation.longitude, results)
+                if (results[0] > 1.0) {
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, map.cameraPosition.zoom))
                     userLocation = currentUserLocation
                 }
 
@@ -107,6 +97,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         //        TODO: When the user confirms on the selected location,
         //         send back the selected location details to the view model
         //         and navigate back to the previous fragment to save the reminder and add the geofence
+        Log.d(TAG, "Save Location")
     }
 
 
@@ -138,6 +129,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         if (googleMap == null) return
         map = googleMap
+        map.animateCamera(CameraUpdateFactory.zoomTo(mapZoom))
         setMapLongClick(map)
         setPoiClick(map)
 
@@ -223,7 +215,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onStop() {
         super.onStop()
-        location?.stopUdateLocation()
+        location?.stopUpdateLocation()
     }
 
 }
