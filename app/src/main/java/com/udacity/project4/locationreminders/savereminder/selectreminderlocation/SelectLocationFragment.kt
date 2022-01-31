@@ -6,13 +6,13 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -28,7 +28,7 @@ import org.koin.android.ext.android.inject
 import java.util.*
 
 
-private val TAG = SelectLocationFragment::class.java.simpleName
+//private val TAG = SelectLocationFragment::class.java.simpleName
 //private const val REQUEST_LOCATION_PERMISSION = 100
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
@@ -41,13 +41,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var mapZoom = 18f
     private lateinit var userLocation: LatLng
     private lateinit var marker: Marker
+    private var isMarker = false
 
     private lateinit var selectedPoi: PointOfInterest
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        Log.d(TAG, "onCreateView")
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_select_location, container, false)
 
@@ -70,21 +70,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 if (results[0] > 1.0) {
                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, map.cameraPosition.zoom))
                     userLocation = currentUserLocation
+                    setMarkerOnUserLocation(map, userLocation)
                 }
-
             }
         })
-//        TODO: add the map setup implementation
-//        TODO: zoom to the user location after taking his permission
 //        TODO: add style to the map
-//        TODO: put a marker to location that the user selected
 
-
-//        TODO: call this function after the user confirms on the selected location
         binding.saveButton.setOnClickListener {
             onLocationSelected()
         }
-
 
         binding.saveButton.visibility = View.INVISIBLE
 
@@ -92,10 +86,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun onLocationSelected() {
-        //        TODO: When the user confirms on the selected location,
-        //         send back the selected location details to the view model
-        //         and navigate back to the previous fragment to save the reminder and add the geofence
-        Log.d(TAG, "Save Location")
+        _viewModel.selectedPOI.value = selectedPoi
+        _viewModel.latitude.value = selectedPoi.latLng.latitude
+        _viewModel.longitude.value = selectedPoi.latLng.longitude
+        _viewModel.reminderSelectedLocationStr.value = selectedPoi.name
+        findNavController().popBackStack()
     }
 
 
@@ -130,12 +125,34 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         map.animateCamera(CameraUpdateFactory.zoomTo(mapZoom))
         setMapLongClick(map)
         setPoiClick(map)
-
         enableMyLocation()
     }
 
-    private fun setMapLongClick(map: GoogleMap) {
+    private fun setMarkerOnUserLocation(map: GoogleMap, userLocation: LatLng) {
+        if (isMarker) return
+        map.clear()
 
+        val snippet = String.format(
+            Locale.getDefault(),
+            "Latitude: %1$.5f, Longitude: %2$.5f",
+            userLocation.latitude,
+            userLocation.longitude
+        )
+
+        selectedPoi = PointOfInterest(userLocation, snippet, snippet)
+
+        marker = map.addMarker(
+            MarkerOptions()
+                .position(userLocation)
+                .title("Reminder Location")
+                .snippet(snippet)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+        )
+
+        isMarker = true
+    }
+
+    private fun setMapLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener { latLng ->
             map.clear()
 
@@ -145,8 +162,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 latLng.latitude,
                 latLng.longitude
             )
-
-            Log.d(TAG, "Set Long Click")
 
             selectedPoi = PointOfInterest(latLng, snippet, snippet)
 
@@ -162,9 +177,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun setPoiClick(map: GoogleMap) {
-
         map.setOnPoiClickListener { poi ->
-            Log.d(TAG, "${poi.name} ${poi.placeId}")
             map.clear()
             selectedPoi = poi
             val poiMarker = map.addMarker(
@@ -203,7 +216,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray
     ) {
         location?.onRequestPermissionResult(requestCode,permissions,grantResults)
-
     }
 
     override fun onStart() {
