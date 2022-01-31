@@ -64,8 +64,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         location = Location(activity as AppCompatActivity, object: locationListener {
             override fun locationResponse(locationResult: LocationResult) {
-                //Log.d(TAG, "Location Response: $locationResult")
-
                 val currentUserLocation = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
                 val results = FloatArray(1)
                 android.location.Location.distanceBetween(userLocation.latitude, userLocation.longitude, currentUserLocation.latitude, currentUserLocation.longitude, results)
