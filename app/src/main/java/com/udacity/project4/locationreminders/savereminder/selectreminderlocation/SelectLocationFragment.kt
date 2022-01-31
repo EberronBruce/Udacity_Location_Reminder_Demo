@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -38,7 +39,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     var location: Location? = null
-    private var mapZoom = 18f
+    private val mapZoom = 18f
     private lateinit var userLocation: LatLng
     private lateinit var marker: Marker
 
@@ -120,7 +121,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         if (googleMap == null) return
         map = googleMap
-        map.animateCamera(CameraUpdateFactory.zoomTo(mapZoom))
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, mapZoom))
         setMapLongClick(map)
         setPoiClick(map)
         enableMyLocation()
