@@ -41,7 +41,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var mapZoom = 18f
     private lateinit var userLocation: LatLng
     private lateinit var marker: Marker
-    private var isMarker = false
 
     private lateinit var selectedPoi: PointOfInterest
 
@@ -70,7 +69,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 if (results[0] > 1.0) {
                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentUserLocation, map.cameraPosition.zoom))
                     userLocation = currentUserLocation
-                    setMarkerOnUserLocation(map, userLocation)
                 }
             }
         })
@@ -126,30 +124,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMapLongClick(map)
         setPoiClick(map)
         enableMyLocation()
-    }
-
-    private fun setMarkerOnUserLocation(map: GoogleMap, userLocation: LatLng) {
-        if (isMarker) return
-        map.clear()
-
-        val snippet = String.format(
-            Locale.getDefault(),
-            "Latitude: %1$.5f, Longitude: %2$.5f",
-            userLocation.latitude,
-            userLocation.longitude
-        )
-
-        selectedPoi = PointOfInterest(userLocation, snippet, snippet)
-
-        marker = map.addMarker(
-            MarkerOptions()
-                .position(userLocation)
-                .title("Reminder Location")
-                .snippet(snippet)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-        )
-
-        isMarker = true
     }
 
     private fun setMapLongClick(map: GoogleMap) {
