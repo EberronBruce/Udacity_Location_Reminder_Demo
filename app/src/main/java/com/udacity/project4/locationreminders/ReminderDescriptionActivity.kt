@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.udacity.project4.R
@@ -27,6 +28,7 @@ class ReminderDescriptionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityReminderDescriptionBinding
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("ReminderDescr", "onCreate")
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(
             this,
