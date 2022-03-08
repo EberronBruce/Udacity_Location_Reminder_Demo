@@ -46,6 +46,7 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
     // App dependencies
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
+    implementation "androidx.core:core-ktx:1.7.0"
     implementation "androidx.legacy:legacy-support-v4:$androidXLegacySupport"
     implementation "androidx.annotation:annotation:$androidXAnnotations"
 
